@@ -314,7 +314,21 @@ def pass2(c, real, suf="", titulo=""):
     a.grid(alpha=0.3)
     a = axs[1, 0]
     bins = np.arange(finals.min() - 1.5, finals.max() + 2.5, 2) if len(finals) else 10
-    a.hist(finals, bins=np.arange(np.floor(finals.min()) - 0.5, np.ceil(finals.max()) + 1.5, 1), rwidth=0.85)
+    a.hist(finals, bins=np.arange(np.floor(finals.min()) - 0.5, np.ceil(finals.max()) + 1.5, 1), rwidth=0.85,
+           label="medido")
+    # esperado con giros de ±180° al azar e independientes: suma de binomiales, una por
+    # realización con su propio número de saltos (respeta la paridad de θ_f/180 con n)
+    from math import comb
+    xm = np.arange(-nj.max(), nj.max() + 1)
+    expct = np.zeros(len(xm))
+    for n_ in nj:
+        for k_ in range(n_ + 1):
+            expct[2 * k_ - n_ + nj.max()] += comb(n_, k_) / 2 ** n_
+    sd = np.sqrt(expct * (1 - expct / len(nj)))
+    keep = expct > 1e-3
+    a.errorbar(xm[keep], expct[keep], yerr=sd[keep], fmt="o", color="k", ms=4, capsize=2,
+               label="esperado: ±180° al azar\n(± desvío por bin)")
+    a.legend(fontsize=7)
     a.set_xlabel("ángulo final / 180°"); a.set_ylabel("realizaciones")
     a.set_title(f"ángulo final: media {finals.mean():+.2f}, desv. {finals.std():.2f}")
     a = axs[1, 1]
