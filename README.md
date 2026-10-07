@@ -75,3 +75,51 @@ hacer estadística de las caminatas angulares):
 - **Mismo encuadre siempre**, con todo el palito visible.
 - **Soltar la pieza y sacar la mano rápido**: el primer salto ocurre con los dedos todavía
   en cuadro.
+
+---
+
+# Muchas realizaciones: estadística de la caminata angular
+
+Segundo video (`muchas.mp4`, 8402 frames, 30 fps, ~4 min 40 s; no está en el repo por
+tamaño, 654 MB): fondo blanco, cámara casi fija, **34 realizaciones**. Se analiza con
+`analiza_muchas.py`, que procesa el video frame a frame (no lo carga entero en memoria):
+
+```bash
+python3 analiza_muchas.py muchas.mp4 muchas      # ~8 min la primera vez; después usa muchas/cache.npz
+```
+
+Cambios respecto del análisis del primer video:
+- palito claro: se ajusta con la primera racha de madera desde la izquierda y sólo en la
+  parte alta (cerca de la base hay un reflejo anaranjado que desplazaba la recta);
+- la mano se detecta por piel bien saturada y oscura; las manchas de movimiento grandes
+  (mano y su sombra) se descartan, así el primer salto se mide aunque los dedos sigan en cuadro;
+- un evento de más de 9 frames se parte en dos; un "salto" más arriba que el anterior
+  (la mano que vuelve) o sobre la base (la pieza que aterriza) se descarta.
+
+![caminatas](muchas/angulo_vs_salto.png)
+![estadística](muchas/estadistica.png)
+
+## Resultados (34 realizaciones, 324 saltos)
+
+| | |
+|---|---|
+| saltos por realización | 9.5 en promedio (8–10) |
+| P(antihorario) | 0.49 |
+| P(repetir el sentido del salto anterior) | 0.54 (sin memoria: 0.50) |
+| ⟨s_n s_{n+1}⟩ | +0.09 (error ≈ ±0.06) |
+| ángulo final / 180° | −0.18 ± 3.72 |
+| ⟨θ²⟩ en n = 10 | ≈ 19 (caminata sin memoria: 10 ± 2.4) |
+| P(antihorario) en el 1er salto | 0.32 (11 de 34) |
+
+## Archivos (`muchas/`)
+
+| Archivo | Contenido |
+|---|---|
+| `saltos.csv` | un salto por fila: realización, n, frames, tiempo, lado, sentido, ángulo acumulado, altura, confianza |
+| `realizaciones.csv` | una realización por fila: frames, nº de saltos, ángulo final, secuencia (L/R) |
+| `angulo_vs_salto.png` | las 34 caminatas y la media |
+| `estadistica.png` | ⟨θ²⟩ vs n, autocorrelación del sentido, P(antihorario) vs n, histogramas |
+| `realizaciones/realizacion_kk.mp4` | el video cortado por realización |
+| `segmentacion.mp4` | control: todas las realizaciones seguidas, recorte del palito, píxeles detectados, nº de salto, ángulo y CW/CCW |
+| `check_saltos.jpg` | una fila por realización con un recorte de cada salto (borde naranja = confianza baja) |
+| `cache.npz` | resultado de la pasada lenta; con él se rehace todo lo demás sin el video |
