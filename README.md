@@ -174,6 +174,12 @@ python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_s
 | ídem sin R16 | 1.18 (p = 0.21) | 1.10 (p = 0.32) | 1.00 ± 0.23 |
 | ⟨θ²⟩ al final (20 realizaciones) | 19.0 en n = 10 | 15.4 en n = 9 | n ± n·√(2/20) |
 
+En el panel "ángulo final" de ambas figuras, los puntos negros son la distribución esperada
+si cada salto fuera ±180° al azar e independiente: suma de binomiales, una por realización con
+su número de saltos, P(θ_f/180 = 2k − n) = C(n,k)/2ⁿ, con barras de ± un desvío por bin.
+Con todos los saltos la distribución medida es más ancha que la esperada (faltan casos cerca
+de 0 y sobran en ±4…6); sin el primer salto casi todos los bins caen dentro de su barra.
+
 Sin el primer salto nada es significativo al 5 %: no hay sesgo, no hay memoria entre saltos
 y la dispersión es compatible con una moneda justa salvo por R16. ⟨θ²⟩ sigue a n hasta
 n ≈ 4 y después se despega, pero esos puntos usan sólo las 20 realizaciones con 10 saltos
