@@ -122,6 +122,7 @@ Cambios respecto del análisis del primer video:
 | `realizaciones/realizacion_kk.mp4` | el video cortado por realización |
 | `segmentacion.mp4` | control: todas las realizaciones seguidas, recorte del palito, píxeles detectados, nº de salto, ángulo y CW/CCW |
 | `check_saltos.jpg` | una fila por realización con un recorte de cada salto (borde naranja = confianza baja) |
+| `realizaciones.gif` | 6 realizaciones lado a lado (`hace_gif_muchas.py video.mp4 muchas 16,12,1,2,19,21`) |
 | `cache.npz` | resultado de la pasada lenta; con él se rehace todo lo demás sin el video |
 
 ## ¿Qué decide el sentido? La inclinación de la pieza en reposo
