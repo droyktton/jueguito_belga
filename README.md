@@ -123,3 +123,32 @@ Cambios respecto del análisis del primer video:
 | `segmentacion.mp4` | control: todas las realizaciones seguidas, recorte del palito, píxeles detectados, nº de salto, ángulo y CW/CCW |
 | `check_saltos.jpg` | una fila por realización con un recorte de cada salto (borde naranja = confianza baja) |
 | `cache.npz` | resultado de la pasada lenta; con él se rehace todo lo demás sin el video |
+
+## ¿Qué decide el sentido? La inclinación de la pieza en reposo
+
+La pieza abraza el palito con dos placas y, quieta entre salto y salto, queda algo
+inclinada. `configuracion.py` mide esa inclinación en los frames de reposo justo antes de
+cada salto (pendiente dx/dy de las partes oscuras y las puntas blancas, relativa al palito):
+
+```bash
+python3 configuracion.py muchas.mp4 muchas      # -> muchas/inclinacion.csv, muchas/inclinacion.png
+```
+
+![inclinación](muchas/inclinacion.png)
+
+- Inclinada como "\" (arriba a la izquierda): el salto es casi siempre **antihorario**;
+  inclinada como "/": casi siempre **horario**. P(antihorario) va de 0.07 a 0.93 entre los
+  sextiles extremos de la pendiente.
+- La regla "pendiente > 0.07 → antihorario" acierta el **77 %** de los saltos (validación
+  cruzada dejando afuera una realización por vez; el azar da 50 %). El umbral no es 0
+  probablemente porque el palito o la cámara están levemente inclinados.
+- La inclinación casi no recuerda el salto anterior (correlación entre pendientes consecutivas
+  0.10; pendiente media 0.054 tras un salto antihorario y 0.029 tras uno horario, ~1.8σ):
+  por eso la memoria entre saltos es débil.
+- Antes del **primer** salto la pieza queda en promedio como "/" (pendiente −0.01), lo que
+  explica que el primer salto sea horario en 23 de 34 realizaciones: depende de cómo se la coloca.
+- R16 (10 saltos antihorarios seguidos) se revisó cuadro a cuadro: es real; la pieza quedó
+  inclinada como "\" antes de cada salto.
+
+Nota: este mp4 tiene frame rate variable; `cv2.CAP_PROP_POS_FRAMES` cae entre 2 y 160 frames
+antes del pedido. Todos los scripts leen el video secuencialmente.
