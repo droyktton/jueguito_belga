@@ -4,6 +4,8 @@ Una piecita de madera se coloca arriba de un palito vertical y baja a saltitos,
 volteando en cada salto hacia la izquierda o hacia la derecha, en forma aparentemente
 aleatoria. El experimento se filmó tres veces (`20261007_102608.mp4`, 30 fps, 1080x1920).
 
+![realizaciones](realizaciones.gif)
+
 ![ángulo vs salto](angulo_vs_salto.png)
 
 ## Qué hace `analiza_jueguito.py`
@@ -39,12 +41,14 @@ aleatoria. El experimento se filmó tres veces (`20261007_102608.mp4`, 30 fps, 1
 | `realizacion_{k}.mp4` | el video cortado por realización |
 | `segmentacion_realizacion_{k}.mp4` | control a media velocidad: palito (verde), píxeles de la pieza (rojo durante un salto), número y sentido de cada salto |
 | `check_realizacion_{k}.jpg` | un recorte por salto con el sentido detectado |
+| `hace_gif.py` → `realizaciones.gif` | las 3 realizaciones lado a lado (media velocidad), con nº de salto, ángulo acumulado y CW/CCW |
 
 ## Uso
 
 ```bash
 pip install opencv-python numpy matplotlib   # y ffmpeg en el PATH
 python3 analiza_jueguito.py 20261007_102608.mp4
+python3 hace_gif.py                 # usa los CSV generados por el anterior
 ```
 
 Si algún sentido está mal detectado se corrige a mano con el diccionario `OVERRIDE`
