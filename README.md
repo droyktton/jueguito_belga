@@ -61,3 +61,17 @@ al principio del script, p.ej. `OVERRIDE = {(3, 6): -1}` (realización 3, salto 
   dominante. Los saltos con confianza < 0.8 se marcan para revisar
   (R2 salto 1, R3 saltos 4 y 6).
 - El primer salto de cada realización ocurre mientras los dedos todavía están en cuadro.
+
+## Consejos para filmar nuevos videos
+
+Para que el análisis automático sea más confiable (y poder juntar muchos videos para
+hacer estadística de las caminatas angulares):
+
+- **Cámara fija** (trípode o apoyada): ahora se compensa el temblor, pero agrega ruido.
+- **Más fps** si el celular lo permite (60 o 120 en cámara lenta): a 30 fps una voltereta
+  dura 2–6 frames y sale muy movida.
+- **Fondo liso y claro detrás del palito** (por ejemplo una cartulina): el monitor oscuro
+  se confunde con las partes negras de la pieza.
+- **Mismo encuadre siempre**, con todo el palito visible.
+- **Soltar la pieza y sacar la mano rápido**: el primer salto ocurre con los dedos todavía
+  en cuadro.
