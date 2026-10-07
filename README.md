@@ -153,3 +153,28 @@ python3 configuracion.py muchas.mp4 muchas      # -> muchas/inclinacion.csv, muc
 
 Nota: este mp4 tiene frame rate variable; `cv2.CAP_PROP_POS_FRAMES` cae entre 2 y 160 frames
 antes del pedido. Todos los scripts leen el video secuencialmente.
+
+## Sin el primer salto
+
+El primer salto depende de cómo se coloca la pieza (ver arriba), así que la caminata
+"libre" se analiza desde el 2º salto:
+
+```bash
+python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_sin1.*, muchas/tests_sin1.txt
+```
+
+![estadística sin el 1er salto](muchas/estadistica_sin1.png)
+
+| | con 1er salto (`tests.txt`) | sin 1er salto (`tests_sin1.txt`) | moneda justa |
+|---|---|---|---|
+| saltos | 324 | 290 | |
+| P(antihorario) | 0.49 (p = 0.78) | 0.51 (p = 0.77) | 0.5 |
+| P(repetir sentido) | 0.545 (p = 0.14) | 0.527 (p = 0.38) | 0.50 ± 0.03 |
+| dispersión ⟨θ_f²⟩/⟨n⟩ | 1.46 (p = 0.035) | 1.34 (p = 0.08) | 1.00 ± 0.23 |
+| ídem sin R16 | 1.18 (p = 0.21) | 1.10 (p = 0.32) | 1.00 ± 0.23 |
+| ⟨θ²⟩ al final (20 realizaciones) | 19.0 en n = 10 | 15.4 en n = 9 | n ± n·√(2/20) |
+
+Sin el primer salto nada es significativo al 5 %: no hay sesgo, no hay memoria entre saltos
+y la dispersión es compatible con una moneda justa salvo por R16. ⟨θ²⟩ sigue a n hasta
+n ≈ 4 y después se despega, pero esos puntos usan sólo las 20 realizaciones con 10 saltos
+y pesa mucho R16.

@@ -12,7 +12,7 @@ Pasada 2: separa realizaciones, detecta saltos y su sentido, escribe CSV, gráfi
 Convención: la pieza voltea hacia la izquierda del palito -> antihorario (+180°),
 hacia la derecha -> horario (-180°), visto desde la cámara.
 
-Uso: python3 analiza_muchas.py video.mp4 [carpeta_salida]
+Uso: python3 analiza_muchas.py video.mp4 [carpeta_salida] [--sin-videos] [--sin-primer-salto]
 """
 import os
 import sys
@@ -233,17 +233,17 @@ def read_frames(path, frames_wanted):
         k += 1
 
 
-def pass2(c, real):
+def pass2(c, real, suf="", titulo=""):
     fps = float(c["fps"])
     # ---- tablas
-    with open(os.path.join(OUT, "saltos.csv"), "w") as fh:
+    with open(os.path.join(OUT, f"saltos{suf}.csv"), "w") as fh:
         fh.write("realizacion,n_salto,frame_ini,frame_fin,t_s,lado,sentido,angulo_acum_deg,altura_px,confianza\n")
         for r in real:
             for n, J in enumerate(r["jumps"], 1):
                 fh.write(f"{r['k']},{n},{J['f0']},{J['f1']},{(J['f0'] - r['a']) / fps:.3f},"
                          f"{'izq' if J['sense'] > 0 else 'der'},{J['s']:+d},{r['ang'][n]},"
                          f"{J['y'] / SCALE:.0f},{J['conf']:.2f}\n")
-    with open(os.path.join(OUT, "realizaciones.csv"), "w") as fh:
+    with open(os.path.join(OUT, f"realizaciones{suf}.csv"), "w") as fh:
         fh.write("realizacion,frame_ini,frame_fin,t_ini_s,n_saltos,n_ccw,n_cw,angulo_final_deg,secuencia\n")
         for r in real:
             s_ = np.array([J["s"] for J in r["jumps"]])
@@ -267,11 +267,11 @@ def pass2(c, real):
     ax.axhline(0, color="gray", lw=0.6)
     ax.set_xlabel("número de salto n")
     ax.set_ylabel("ángulo acumulado θ / 180°   (+ = antihorario)")
-    ax.set_title(f"{len(real)} realizaciones")
+    ax.set_title(f"{len(real)} realizaciones{titulo}")
     ax.legend()
     ax.grid(alpha=0.3)
     fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "angulo_vs_salto.png"), dpi=150)
+    fig.savefig(os.path.join(OUT, f"angulo_vs_salto{suf}.png"), dpi=150)
     plt.close(fig)
 
     # ---- estadística
@@ -321,6 +321,7 @@ def pass2(c, real):
     a.hist(nj, bins=np.arange(nj.min() - 0.5, nj.max() + 1.5, 1), rwidth=0.85)
     a.set_xlabel("saltos por realización"); a.set_ylabel("realizaciones")
     a.set_title(f"saltos por realización: media {nj.mean():.1f}")
+    fig.suptitle(titulo.strip(" ,"), fontsize=11)
     a = axs[1, 2]
     # largo de rachas de saltos en el mismo sentido
     runs = []
@@ -344,10 +345,57 @@ def pass2(c, real):
     a.set_xlabel("largo de racha en el mismo sentido"); a.set_ylabel("frecuencia")
     a.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(os.path.join(OUT, "estadistica.png"), dpi=130)
+    fig.savefig(os.path.join(OUT, f"estadistica{suf}.png"), dpi=130)
     plt.close(fig)
     return dict(p_ccw=(allS > 0).mean(), p_repeat=(pairs > 0).mean(), nsaltos=len(allS),
                 corr1=corr[0], final_mean=finals.mean(), final_std=finals.std())
+
+
+def tests(S, nsim=20000, seed=0):
+    """Tests contra una caminata al azar sin sesgo ni memoria. S: lista de arrays de ±1."""
+    from scipy.stats import binomtest
+    rng = np.random.default_rng(seed)
+    allS = np.concatenate(S)
+    L = []
+    k = int((allS > 0).sum())
+    L.append(f"saltos: {len(allS)} en {len(S)} realizaciones")
+    L.append(f"sesgo global: antihorario {k}/{len(allS)} = {k / len(allS):.2f}  "
+             f"(binomial p = {binomtest(k, len(allS)).pvalue:.3f})")
+
+    def disp(SS):
+        return np.mean([x.sum() ** 2 for x in SS]) / np.mean([len(x) for x in SS])
+
+    def rep(SS):
+        return np.mean(np.concatenate([x[1:] == x[:-1] for x in SS if len(x) > 1]))
+
+    for lab, SS in (("todas", S), ("sin la más extrema", None)):
+        if SS is None:
+            ext = int(np.argmax([abs(x.sum()) for x in S]))
+            SS = [x for i, x in enumerate(S) if i != ext]
+            lab = f"sin R{ext + 1} (|θ_f| máximo)"
+        o = disp(SS)
+        nul = np.array([disp([rng.choice([-1, 1], len(x)) for x in SS]) for _ in range(nsim)])
+        L.append(f"dispersión ⟨θ_f²⟩/⟨n⟩ [{lab}]: {o:.2f}  (moneda justa {nul.mean():.2f} ± {nul.std():.2f}, "
+                 f"p una cola = {np.mean(nul >= o):.3f})")
+    o = rep(S)
+    nul1 = np.array([rep([rng.choice([-1, 1], len(x)) for x in S]) for _ in range(nsim)])
+    nul2 = np.array([rep([rng.permutation(x) for x in S]) for _ in range(nsim)])
+    L.append(f"P(repetir sentido): {o:.3f}  vs moneda justa {nul1.mean():.3f} ± {nul1.std():.3f} "
+             f"(p = {np.mean(np.abs(nul1 - nul1.mean()) >= abs(o - nul1.mean())):.3f});  "
+             f"vs permutar dentro de cada realización {nul2.mean():.3f} ± {nul2.std():.3f} "
+             f"(p = {np.mean(np.abs(nul2 - nul2.mean()) >= abs(o - nul2.mean())):.3f})")
+    L.append("P(antihorario) por número de salto:")
+    for n in range(1, max(len(x) for x in S) + 1):
+        v = np.array([x[n - 1] for x in S if len(x) >= n])
+        if len(v) < 5:
+            break
+        kk = int((v > 0).sum())
+        L.append(f"   n={n:2d}: {kk:2d}/{len(v):2d} = {kk / len(v):.2f}   p = {binomtest(kk, len(v)).pvalue:.3f}")
+    nmax = max(n for n in range(1, 30) if sum(len(x) >= n for x in S) >= 20)
+    th = np.array([x[:nmax].sum() for x in S if len(x) >= nmax], float)
+    L.append(f"⟨θ²⟩ en n={nmax} ({len(th)} realizaciones): {np.mean(th ** 2):.1f}  "
+             f"(sin memoria: {nmax} ± {nmax * np.sqrt(2 / len(th)):.1f})")
+    return "\n".join(L)
 
 
 def make_videos(c, real):
@@ -456,10 +504,21 @@ if __name__ == "__main__":
         low = [n for n, J in enumerate(jumps, 1) if J["conf"] < 0.8]
         print(f"R{k:02d} frames {a:5d}-{b:5d}  {len(jumps):2d} saltos  {seq:<16s} final {ang[-1]:+5d}°"
               + (f"   revisar saltos {low}" if low else ""))
-    st = pass2(c, real)
+    suf, titulo = "", ""
+    if "--sin-primer-salto" in sys.argv:
+        # el 1er salto depende de cómo se coloca la pieza: la caminata arranca en el 2º
+        for r in real:
+            r["jumps"] = r["jumps"][1:]
+            r["ang"] = [0] + list(np.cumsum([180 * J["s"] for J in r["jumps"]]))
+        suf, titulo = "_sin1", ", sin el 1er salto"
+    st = pass2(c, real, suf, titulo)
+    txt = tests([np.array([J["s"] for J in r["jumps"]]) for r in real])
+    print(txt)
+    with open(os.path.join(OUT, f"tests{suf}.txt"), "w") as fh:
+        fh.write(txt + "\n")
     print(f"{len(real)} realizaciones, {st['nsaltos']} saltos: P(antihorario)={st['p_ccw']:.2f}, "
           f"P(repetir sentido)={st['p_repeat']:.2f}, <s_n s_n+1>={st['corr1']:+.2f}, "
           f"ángulo final {st['final_mean']:+.2f} ± {st['final_std']:.2f} (x180°)")
-    if "--sin-videos" not in sys.argv:
+    if "--sin-videos" not in sys.argv and not suf:
         make_videos(c, real)
     print("salida en", OUT)
