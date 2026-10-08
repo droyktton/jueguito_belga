@@ -184,3 +184,44 @@ Sin el primer salto nada es significativo al 5 %: no hay sesgo, no hay memoria e
 y la dispersión es compatible con una moneda justa salvo por R16. ⟨θ²⟩ sigue a n hasta
 n ≈ 4 y después se despega, pero esos puntos usan sólo las 20 realizaciones con 10 saltos
 y pesa mucho R16.
+
+# Segundo video (2026-10-08) y estadística combinada
+
+`20261008_174636.mp4`: 18 tramos, misma toma que `muchas.mp4` pero con la pieza un poco más
+chica en imagen. Diferencias con el análisis anterior:
+
+- **Umbrales más bajos**: la pieza mueve menos píxeles por salto, y con `EV_PEAK = 500` se
+  perdían 3–4 saltos por realización. Además la base está más arriba (`Y_LAND = 550`).
+- **Dos realizaciones descartadas** (R9 y R10): la pieza se trabó arriba y hubo que meter la mano.
+- **El 1er giro no se puede medir**: la pieza voltea apenas se la suelta, con los dedos y su
+  sombra todavía sobre la punta del palito. Se ignora el movimiento por encima de la punta
+  (`Y_MIN`) y los "saltos" más arriba que el 2º giro (`Y_SALTO_MIN`), así que cada caminata
+  arranca en el 2º giro (8–9 saltos). Por eso este video sólo entra en el análisis
+  *sin el primer salto*.
+
+```bash
+python3 analiza_muchas.py 20261008_174636.mp4 20261008 --EV_LO=120 --EV_PEAK=250 --Y_LAND=550 \
+        --Y_MIN=80 --Y_SALTO_MIN=150 --descartar=9,10 --primer-perdido
+python3 combina.py combinado muchas 20261008 --sin-primer-salto   # -> combinado/*_sin1.*
+```
+
+`combina.py` junta los `saltos_sin1.csv` de varias carpetas, renumera las realizaciones
+(`combinado/origen_sin1.csv` dice de dónde sale cada una) y rehace gráficos y tests.
+
+![estadística combinada sin el 1er salto](combinado/estadistica_sin1.png?v=1)
+
+| sin 1er salto | `muchas` | `20261008` | combinado | moneda justa |
+|---|---|---|---|---|
+| realizaciones / saltos | 34 / 290 | 16 / 142 | 50 / 432 | |
+| P(antihorario) | 0.51 (p = 0.77) | 0.55 (p = 0.28) | 0.52 (p = 0.36) | 0.5 |
+| P(repetir sentido) | 0.527 (p = 0.38) | 0.516 (p = 0.72) | 0.524 (p = 0.39) | 0.50 |
+| dispersión ⟨θ_f²⟩/⟨n⟩ | 1.34 (p = 0.08) | 0.97 (p = 0.52) | 1.22 (p = 0.13) | 1.00 |
+| ídem sin la más extrema | 1.10 (p = 0.32) | 0.85 (p = 0.66) | 1.06 (p = 0.37) | 1.00 |
+| ⟨θ²⟩ en n = 9 | 15.4 (20 real.) | 8.4 (14 real.) | 12.5 (34 real.) | 9 |
+
+El video nuevo, por sí solo, es una moneda justa sin memoria en todo. La dispersión de más
+que se veía en `muchas` venía casi toda de R16 y se diluye al combinar: con 50 realizaciones
+y 432 saltos sigue sin haber nada significativo al 5 %.
+
+**Para los próximos videos**: soltar la pieza y retirar la mano antes de que dé el primer
+giro, o sostenerla un poco más abajo de la punta, para que el 1er salto quede medible.

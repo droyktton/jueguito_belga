@@ -13,6 +13,10 @@ Convención: la pieza voltea hacia la izquierda del palito -> antihorario (+180�
 hacia la derecha -> horario (-180°), visto desde la cámara.
 
 Uso: python3 analiza_muchas.py video.mp4 [carpeta_salida] [--sin-videos] [--sin-primer-salto]
+                                 [--descartar=3,7]   (realizaciones a excluir, p.ej. si se metió la mano)
+                                 [--EV_LO=120 --EV_PEAK=250 --Y_LAND=550 --Y_MIN=80 --Y_SALTO_MIN=150]
+                                 (umbrales de la pasada 2 si la toma es distinta; la pasada 1 no se rehace)
+                                 [--primer-perdido]   (el 1er giro no se ve: la salida va como _sin1)
 """
 import os
 import sys
@@ -152,6 +156,28 @@ Y_LAND = 565           # px (media res.): más abajo es la pieza cayendo sobre l
 MIN_JUMPS = 3          # realizaciones con menos saltos se descartan (mano que pasa, etc.)
 
 
+Y_MIN = 0               # px: si > 0, se ignora el movimiento por encima (mano/sombra sobre la punta)
+Y_SALTO_MIN = 0         # px: si > 0, se descartan saltos más arriba (1er giro con la mano en cuadro)
+
+
+def recompute_motion(c, y_min):
+    """Recalcula npix, xside, ycen desde las máscaras guardadas, sólo con y > y_min."""
+    H = c["masks"].shape[1]
+    yy, xx = np.mgrid[0:H, 0:2 * STRIP]
+    sel = (yy > max(y_min, Y_TOP)) & (yy < Y_BOT)
+    for i in range(len(c["npix"])):
+        if c["npix"][i] == 0:
+            continue
+        m = np.unpackbits(c["masks"][i], axis=1).astype(bool) & sel
+        a, b = c["lines"][i]
+        xr = xx + c["x0s"][i] - (a * yy + b)
+        off = m & (np.abs(xr) > CORE) & (np.abs(xr) < STRIP)
+        k = off.sum()
+        c["npix"][i] = k
+        c["xside"][i] = xr[off].mean() if k else 0
+        c["ycen"][i] = yy[off].mean() if k else np.nan
+
+
 def segment_realizations(hand):
     """Tramos sin mano de al menos MIN_LEN frames."""
     free = hand < HAND_TH
@@ -199,7 +225,7 @@ def detect_jumps(c, a, b):
             # que vuelve a entrar; y por debajo de Y_LAND es la pieza cayendo sobre la base
             if jumps and J["y"] < jumps[-1]["y"] - 30:
                 continue
-            if J["y"] > Y_LAND:
+            if J["y"] > Y_LAND or J["y"] < Y_SALTO_MIN:
                 continue
             jumps.append(J)
     return jumps
@@ -363,8 +389,9 @@ def pass2(c, real, suf="", titulo=""):
                 corr1=corr[0], final_mean=finals.mean(), final_std=finals.std())
 
 
-def tests(S, nsim=20000, seed=0):
-    """Tests contra una caminata al azar sin sesgo ni memoria. S: lista de arrays de ±1."""
+def tests(S, nsim=20000, seed=0, labels=None):
+    """Tests contra una caminata al azar sin sesgo ni memoria. S: lista de arrays de ±1;
+    labels: nombre de cada realización (por defecto R1, R2, ...)."""
     from scipy.stats import binomtest
     rng = np.random.default_rng(seed)
     allS = np.concatenate(S)
@@ -384,7 +411,7 @@ def tests(S, nsim=20000, seed=0):
         if SS is None:
             ext = int(np.argmax([abs(x.sum()) for x in S]))
             SS = [x for i, x in enumerate(S) if i != ext]
-            lab = f"sin R{ext + 1} (|θ_f| máximo)"
+            lab = f"sin {labels[ext] if labels else f'R{ext + 1}'} (|θ_f| máximo)"
         o = disp(SS)
         nul = np.array([disp([rng.choice([-1, 1], len(x)) for x in SS]) for _ in range(nsim)])
         L.append(f"dispersión ⟨θ_f²⟩/⟨n⟩ [{lab}]: {o:.2f}  (moneda justa {nul.mean():.2f} ± {nul.std():.2f}, "
@@ -403,7 +430,8 @@ def tests(S, nsim=20000, seed=0):
             break
         kk = int((v > 0).sum())
         L.append(f"   n={n:2d}: {kk:2d}/{len(v):2d} = {kk / len(v):.2f}   p = {binomtest(kk, len(v)).pvalue:.3f}")
-    nmax = max(n for n in range(1, 30) if sum(len(x) >= n for x in S) >= 20)
+    nmin = min(20, len(S) // 2)         # último n al que llegan al menos nmin realizaciones
+    nmax = max(n for n in range(1, 30) if sum(len(x) >= n for x in S) >= nmin)
     th = np.array([x[:nmax].sum() for x in S if len(x) >= nmax], float)
     L.append(f"⟨θ²⟩ en n={nmax} ({len(th)} realizaciones): {np.mean(th ** 2):.1f}  "
              f"(sin memoria: {nmax} ± {nmax * np.sqrt(2 / len(th)):.1f})")
@@ -492,6 +520,11 @@ def make_videos(c, real):
 
 
 if __name__ == "__main__":
+    for a_ in sys.argv[1:]:          # --NOMBRE=valor cambia un parámetro de la pasada 2
+        k_, _, v_ = a_[2:].partition("=")
+        if a_.startswith("--") and k_.isupper() and k_ in globals():
+            globals()[k_] = type(globals()[k_])(v_)
+            print(f"{k_} = {v_}")
     os.makedirs(OUT, exist_ok=True)
     cache = os.path.join(OUT, "cache.npz")
     if not os.path.exists(cache):
@@ -499,6 +532,8 @@ if __name__ == "__main__":
         pass1(VIDEO, cache)
     c = dict(np.load(cache))
     fps = float(c["fps"])
+    if Y_MIN:
+        recompute_motion(c, Y_MIN)
     segs = segment_realizations(c["hand"])
     real = []
     for a, b in segs:
@@ -516,21 +551,28 @@ if __name__ == "__main__":
         low = [n for n, J in enumerate(jumps, 1) if J["conf"] < 0.8]
         print(f"R{k:02d} frames {a:5d}-{b:5d}  {len(jumps):2d} saltos  {seq:<16s} final {ang[-1]:+5d}°"
               + (f"   revisar saltos {low}" if low else ""))
+    drop = {int(x) for a_ in sys.argv if a_.startswith("--descartar=") for x in a_.split("=")[1].split(",")}
+    if drop:
+        print("descarto realizaciones", sorted(drop))
+        real = [r for r in real if r["k"] not in drop]
     suf, titulo = "", ""
-    if "--sin-primer-salto" in sys.argv:
+    if "--primer-perdido" in sys.argv:
+        # el 1er giro ocurrió con la mano en cuadro y no se midió: los saltos ya arrancan en el 2º
+        suf, titulo = "_sin1", ", sin el 1er salto"
+    elif "--sin-primer-salto" in sys.argv:
         # el 1er salto depende de cómo se coloca la pieza: la caminata arranca en el 2º
         for r in real:
             r["jumps"] = r["jumps"][1:]
             r["ang"] = [0] + list(np.cumsum([180 * J["s"] for J in r["jumps"]]))
         suf, titulo = "_sin1", ", sin el 1er salto"
     st = pass2(c, real, suf, titulo)
-    txt = tests([np.array([J["s"] for J in r["jumps"]]) for r in real])
+    txt = tests([np.array([J["s"] for J in r["jumps"]]) for r in real], labels=[f"R{r['k']}" for r in real])
     print(txt)
     with open(os.path.join(OUT, f"tests{suf}.txt"), "w") as fh:
         fh.write(txt + "\n")
     print(f"{len(real)} realizaciones, {st['nsaltos']} saltos: P(antihorario)={st['p_ccw']:.2f}, "
           f"P(repetir sentido)={st['p_repeat']:.2f}, <s_n s_n+1>={st['corr1']:+.2f}, "
           f"ángulo final {st['final_mean']:+.2f} ± {st['final_std']:.2f} (x180°)")
-    if "--sin-videos" not in sys.argv and not suf:
+    if "--sin-videos" not in sys.argv and "--sin-primer-salto" not in sys.argv:
         make_videos(c, real)
     print("salida en", OUT)

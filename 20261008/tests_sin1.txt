@@ -1,0 +1,16 @@
+saltos: 142 en 16 realizaciones
+sesgo global: antihorario 78/142 = 0.55  (binomial p = 0.275)
+dispersión ⟨θ_f²⟩/⟨n⟩ [todas]: 0.97  (moneda justa 1.00 ± 0.33, p una cola = 0.517)
+dispersión ⟨θ_f²⟩/⟨n⟩ [sin R5 (|θ_f| máximo)]: 0.85  (moneda justa 1.00 ± 0.34, p una cola = 0.660)
+P(repetir sentido): 0.516  vs moneda justa 0.500 ± 0.045 (p = 0.718);  vs permutar dentro de cada realización 0.498 ± 0.039 (p = 0.692)
+P(antihorario) por número de salto:
+   n= 1: 10/16 = 0.62   p = 0.454
+   n= 2: 10/16 = 0.62   p = 0.454
+   n= 3:  6/16 = 0.38   p = 0.454
+   n= 4:  8/16 = 0.50   p = 1.000
+   n= 5:  7/16 = 0.44   p = 0.804
+   n= 6:  6/16 = 0.38   p = 0.454
+   n= 7: 12/16 = 0.75   p = 0.077
+   n= 8:  9/16 = 0.56   p = 0.804
+   n= 9: 10/14 = 0.71   p = 0.180
+⟨θ²⟩ en n=9 (14 realizaciones): 8.4  (sin memoria: 9 ± 3.4)
