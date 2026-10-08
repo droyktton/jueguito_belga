@@ -176,7 +176,9 @@ python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_s
 
 En el panel "ángulo final" de ambas figuras, los puntos negros son la distribución esperada
 si cada salto fuera ±180° al azar e independiente: suma de binomiales, una por realización con
-su número de saltos, P(θ_f/180 = 2k − n) = C(n,k)/2ⁿ, con barras de ± un desvío por bin.
+su número de saltos, P(θ_f/180 = 2k − n) = C(n,k)/2ⁿ. Las líneas verticales son la banda
+central del 68 % de los conteos por bin en 20000 repeticiones simuladas de las 34 realizaciones
+con moneda justa (asimétrica, entera y nunca negativa; equivale a ±1σ donde hay muchos casos).
 Con todos los saltos la distribución medida es más ancha que la esperada (faltan casos cerca
 de 0 y sobran en ±4…6); sin el primer salto casi todos los bins caen dentro de su barra.
 
