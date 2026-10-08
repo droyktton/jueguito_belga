@@ -97,7 +97,7 @@ Cambios respecto del análisis del primer video:
   (la mano que vuelve) o sobre la base (la pieza que aterriza) se descarta.
 
 ![caminatas](muchas/angulo_vs_salto.png)
-![estadística](muchas/estadistica.png)
+![estadística](muchas/estadistica.png?v=3dfb9c8)
 
 ## Resultados (34 realizaciones, 324 saltos)
 
@@ -163,7 +163,7 @@ El primer salto depende de cómo se coloca la pieza (ver arriba), así que la ca
 python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_sin1.*, muchas/tests_sin1.txt
 ```
 
-![estadística sin el 1er salto](muchas/estadistica_sin1.png)
+![estadística sin el 1er salto](muchas/estadistica_sin1.png?v=3dfb9c8)
 
 | | con 1er salto (`tests.txt`) | sin 1er salto (`tests_sin1.txt`) | moneda justa |
 |---|---|---|---|
