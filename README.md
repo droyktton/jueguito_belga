@@ -97,7 +97,7 @@ Cambios respecto del análisis del primer video:
   (la mano que vuelve) o sobre la base (la pieza que aterriza) se descarta.
 
 ![caminatas](muchas/angulo_vs_salto.png)
-![estadística](muchas/estadistica.png?v=3dfb9c8)
+![estadística](muchas/estadistica.png?v=4)
 
 ## Resultados (34 realizaciones, 324 saltos)
 
@@ -163,7 +163,7 @@ El primer salto depende de cómo se coloca la pieza (ver arriba), así que la ca
 python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_sin1.*, muchas/tests_sin1.txt
 ```
 
-![estadística sin el 1er salto](muchas/estadistica_sin1.png?v=3dfb9c8)
+![estadística sin el 1er salto](muchas/estadistica_sin1.png?v=4)
 
 | | con 1er salto (`tests.txt`) | sin 1er salto (`tests_sin1.txt`) | moneda justa |
 |---|---|---|---|
@@ -176,11 +176,9 @@ python3 analiza_muchas.py muchas.mp4 muchas --sin-primer-salto   # -> muchas/*_s
 
 En el panel "ángulo final" de ambas figuras, los puntos negros son la distribución esperada
 si cada salto fuera ±180° al azar e independiente: suma de binomiales, una por realización con
-su número de saltos, P(θ_f/180 = 2k − n) = C(n,k)/2ⁿ. Las líneas verticales son la banda
-central del 68 % de los conteos por bin en 20000 repeticiones simuladas de las 34 realizaciones
-con moneda justa (asimétrica, entera y nunca negativa; equivale a ±1σ donde hay muchos casos).
+su número de saltos, P(θ_f/180 = 2k − n) = C(n,k)/2ⁿ.
 Con todos los saltos la distribución medida es más ancha que la esperada (faltan casos cerca
-de 0 y sobran en ±4…6); sin el primer salto casi todos los bins caen dentro de su barra.
+de 0 y sobran en ±4…6); sin el primer salto el acuerdo es bastante mejor.
 
 Sin el primer salto nada es significativo al 5 %: no hay sesgo, no hay memoria entre saltos
 y la dispersión es compatible con una moneda justa salvo por R16. ⟨θ²⟩ sigue a n hasta

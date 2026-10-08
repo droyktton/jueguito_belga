@@ -324,15 +324,7 @@ def pass2(c, real, suf="", titulo=""):
     for n_ in nj:
         for k_ in range(n_ + 1):
             expct[2 * k_ - n_ + nj.max()] += comb(n_, k_) / 2 ** n_
-    # banda: intervalo central del 68 % de los conteos por bin en repeticiones simuladas de
-    # todas las realizaciones (asimétrica, entera y nunca negativa)
-    rng = np.random.default_rng(0)
-    sims = 2 * rng.binomial(nj[None, :], 0.5, size=(20000, len(nj))) - nj[None, :]
-    cnts = np.stack([(sims == v).sum(1) for v in xm], 1)
-    lo, hi = np.percentile(cnts, [16, 84], axis=0)
     keep = expct > 1e-3
-    # el intervalo no siempre contiene a la media (p. ej. media 0.2 -> [0, 0]): se dibuja aparte
-    a.vlines(xm[keep], lo[keep], hi[keep], color="k", lw=1.5, label="banda 68 % (simulada)")
     a.plot(xm[keep], expct[keep], "o", color="k", ms=4, label="esperado: ±180° al azar")
     a.legend(fontsize=7)
     a.set_xlabel("ángulo final / 180°"); a.set_ylabel("realizaciones")
